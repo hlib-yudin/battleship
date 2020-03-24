@@ -1,0 +1,98 @@
+.container{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(184, 237, 255, 0.4);
+    /*opacity: 0.5;*/
+    width: 650px;
+    height: 350px;
+    top: 50%;
+    left: 50%;
+    margin: 100px auto;
+    padding: 10px 30px 10px 10px;
+    border: solid 5px #66b1fe;
+
+}
+
+.field{
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: space-around;
+    background: #c2eefe;
+    width: 251px;
+    height: 251px;
+    margin: 0;
+
+
+    border: solid 4px #66b1fe;
+}
+
+.cell{
+    background: #b3d4fc;
+    width: 25px;
+    height: 25px;
+    margin-right: 0;
+    border-bottom: ridge 0.1px #c2eefe;
+    border-right: ridge 0.1px #c2eefe;
+}
+
+.row{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+}
+
+header{
+  margin: 0;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  /*background-image: linear-gradient(to bottom right, #b3d4fc,  #66b1fe);*/
+    width: 100%;
+
+  text-align: center;
+}
+h1{
+  font-family: "Imprint MT Shadow";
+  font-size: 50pt;
+  color:  #2b3391;
+  margin: 0;
+  position: center;
+}
+body{
+  background: url("https://docplayer.ru/docs-images/72/66455058/images/50-0.jpg") no-repeat;
+  background-size: 100% 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.table1{
+  padding-left: 28px;
+  width: 251px;
+  border-spacing: 0;
+}
+
+tr{padding: 0;}
+td{
+  min-width: 25px;
+  height: 25px;
+  color: #2b3391;
+  text-align: center;
+  font-size: 14pt;
+  font-weight: bold;
+  padding: 0;
+
+}
+
+.table2{
+  border-spacing: 0;
+  padding-top: 3px;
+}
+
+.text{
+  text-align: center;
+  font-size: 16pt;
+
+}
