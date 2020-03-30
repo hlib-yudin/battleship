@@ -157,13 +157,11 @@ class Field():
                 if not cell.belongsTo:
                     if cell.isHit:
                         print('*', end=' ')
-                        cell.color = 'grey'
                     else:
                         print('0', end=' ')
                 else:
                     if cell.isHit:
                         print('X', end = ' ')
-                        cell.color = 'red'
                     else:
                         print('S', end=' ')
             print()
