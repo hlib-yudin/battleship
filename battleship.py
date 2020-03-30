@@ -92,7 +92,7 @@ class Field():
         """Ініціалізатор класу."""
         self.__cellsList = [[Cell((i, j)) for j in range(10)] for i in range(10)]
         self.__shipsCount = 0 # к-сть непотоплених кораблів
-        self.__shipsList = [0] * 10
+        self.__shipsList = []
 
     @property
     def cellsList(self):
@@ -140,10 +140,12 @@ class Field():
 
     def placeShip(self, ship):
         """Розміщує корабель на ігровому полі, змінює атрибут belongsTo
-        клітинок, які тепер належать кораблю."""
+        клітинок, які тепер належать кораблю, додає корабель до списку кораблів
+        shipsList."""
         cells = ship.elements
         for x, y in cells:
             self.cellsList[x][y].belongsTo = ship
+        self.shipsList.append(ship)
 
 
     def display(self):
@@ -155,11 +157,13 @@ class Field():
                 if not cell.belongsTo:
                     if cell.isHit:
                         print('*', end=' ')
+                        cell.color = 'grey'
                     else:
                         print('0', end=' ')
                 else:
                     if cell.isHit:
                         print('X', end = ' ')
+                        cell.color = 'red'
                     else:
                         print('S', end=' ')
             print()
@@ -174,5 +178,6 @@ ship = Ship(3, ((0,0), (0,1), (0,2)))
 f.placeShip(ship)
 f.cellsList[0][0].hitCell()
 f.cellsList[0][1].hitCell()
+#f.cellsList[0][2].hitCell()
 #f.sinkShip(ship)
 f.display()
