@@ -59,6 +59,11 @@ class Ship():
         """Геттер для поля size."""
         return self.__size
 
+    @size.setter
+    def size(self, size):
+        """Сеттер для поля size."""
+        self.__size = size
+
     @property
     def elements(self):
         """Геттер для поля elements."""
