@@ -1,5 +1,9 @@
-class Cell():
+from display import *
+from game import *
+
+class Cell(IViewable):
     """Клас, що відповідає за одну клітинку на ігровому полі."""
+    # прибрати колір???
 
     def __init__(self, coords, color='blue'):
         """Ініціалізатор класу."""
@@ -44,7 +48,29 @@ class Cell():
         """Сеттер для поля color."""
         self.__color = color
 
-    
+    def getRenderInfo(self):
+        """Повертає інформацію для графічного відображення."""
+
+        # з'ясовуємо, чи влучили в клітинку, чи ні, та статус корабля, якому вона належить
+        # (потоплений/не потоплений/не належить кораблю)
+        if self.isHit:
+            isHitStatus = True
+        else:
+            isHitStatus = False
+
+        if not self.belongsTo:
+            shipStatus = 'not belongs'
+        elif self.belongsTo.checkIfSunk():
+            shipStatus = 'sunk'
+        else:
+            shipStatus = 'not sunk'
+
+        return dict(
+            isHitStatus=isHitStatus,
+            shipStatus=shipStatus
+        )
+
+
 class Ship():
     """"Клас, що відповідає за один корабель."""
 
@@ -85,7 +111,7 @@ class Ship():
         return False
 
 
-class Field():
+class Field(IViewable):
     """Клас, що відповідає за ігрове поле."""
 
     def __init__(self):
@@ -148,34 +174,59 @@ class Field():
         self.shipsList.append(ship)
 
 
-    def display(self):
-        """ТИМЧАСОВА ФУНКЦІЯ
-        Відображає ігрове поле на екрані."""
-        for cellList in self.cellsList:
-            for cell in cellList:
+    def getRenderInfo(self):
+        """Повертає інформацію для графічного відображення."""
+        return [[self.cellsList[x][y].getRenderInfo() for y in range(10)] 
+            for x in range(10)]
 
-                if not cell.belongsTo:
-                    if cell.isHit:
-                        print('*', end=' ')
-                    else:
-                        print('0', end=' ')
-                else:
-                    if cell.isHit:
-                        print('X', end = ' ')
-                    else:
-                        print('S', end=' ')
-            print()
 
+    # def display(self):
+    #     """ТИМЧАСОВА ФУНКЦІЯ
+    #     Відображає ігрове поле на екрані."""
+    #     for cellList in self.cellsList:
+    #         for cell in cellList:
+
+    #             if not cell.belongsTo:
+    #                 if cell.isHit:
+    #                     print('*', end=' ')
+    #                 else:
+    #                     print('0', end=' ')
+    #             else:
+    #                 if cell.isHit:
+    #                     print('X', end = ' ')
+    #                 else:
+    #                     print('S', end=' ')
+    #         print()
 
     
-                
-
 
 f = Field()
-ship = Ship(3, ((0,0), (0,1), (0,2)))
-f.placeShip(ship)
+ship1 = Ship(3, ((0,0), (0,1), (0,2)))
+ship2 = Ship(2, ((2, 2), (2,3)))
+f.placeShip(ship1)
+f.placeShip(ship2)
 f.cellsList[0][0].hitCell()
+ship1.increaseHitCount()
 f.cellsList[0][1].hitCell()
-#f.cellsList[0][2].hitCell()
-#f.sinkShip(ship)
-f.display()
+ship1.increaseHitCount()
+f.cellsList[0][2].hitCell()
+ship1.increaseHitCount()
+f.sinkShip(ship1)
+f.cellsList[2][3].hitCell()
+
+# замість Field.getRenderInfo буде Game.getRenderInfo
+renderInfo = f.getRenderInfo()
+console = Console()
+console.render(field = dict(
+        playerName='Player 1',
+        cellsInfo=renderInfo
+    ), fieldEnemy = dict(
+        playerName='Player 1',
+        cellsInfo=renderInfo
+))
+# f.display()
+
+"""game = Game()
+game.players = [1, 2]
+game.currentPlayer = game.players[0]
+game.swapPlayer()"""
