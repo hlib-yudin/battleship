@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from random import randrange, choice
 from display import *
+from exceptions import *
 
 
 class Cell(IViewable):
@@ -104,7 +105,6 @@ class Ship:
 
 
   def checkIfSunk(self):
-
       if self.__hitCount == self.__size:
           return True
       else :
@@ -138,10 +138,10 @@ class Field(IViewable):
 
     def setShipsList(self, ship):
         self.shipsList.append(ship)
-        self.__shipsCount += 1
 
     def placeShip(self, ship):
         self.setShipsList(ship)
+        self.__shipsCount += 1
         shipElements = ship.elements
         for x, y in shipElements:
             self.cellsList[x][y].belongsTo = ship
@@ -292,7 +292,7 @@ class AbsPlayer(ABC):
         # print(fleetArray)
 ##########
 
-    def display(self):
+    """def display(self):
         i = 0
         print("   0__1__2__3__4__5__6__7__8__9")
         for cellList in self.field.cellsList:
@@ -312,7 +312,7 @@ class AbsPlayer(ABC):
                     else:
                         print('@', end='  ')
             print()
-            i += 1
+            i += 1"""
 
 
     def makeMove(self, coord):
@@ -338,7 +338,211 @@ class AbsPlayer(ABC):
     @abstractmethod
     def chooseCellCoord(self):
         """метод, що обирає координати пострілу"""
+
+
+    def arrangeShips(self):
+        """Проводить розстановку кораблів."""
+
+        # для робота все просто
+        if isinstance(self, Robot):
+            self.randomArrangement()
+            return
+
+        # 1. отримати від гравця поле з кораблями
+        # 2. перевірити, чи порушує розстановка кораблів правила гри
+        # якщо так -- помилка, чекаємо, коли гравець зробить нормальну розстановку
+        # 3. якщо ні -- зберігаємо розстановку
+############################################################################
+        # 1. отримання даних
+
+        # тимчасове поле; False -- клітинка не належить до корабля, 
+        # True -- належить
+        tempField = [[False for j in range(11)] for i in range(11)]
+        numberOfClickedCells = 0
+
+        # наступний блок коду відбуватиметься, поки гравець не введе коректну розстановку
+        arrangementCorrect = False
+        while not arrangementCorrect:
+
+            endOfArrangement = False
+            self.game.currentInterface.renderWhileArrangingShips(tempField, self.name)
+
+            # поки гравець не завершив розставляти кораблі
+            while not endOfArrangement:
+
+                # поки гравець не введе адекватні дані
+                correctInput = False
+                while not correctInput:
+
+                    try:
+                        # користувач вводить координати клітинки; щоб завершити, він
+                        # вводить порожнй рядок; для випадкової розстановки він вводить 'r'
+                        print('''
+a3 -- обрати клітинку а3
+r -- випадкова розстановка
+Порожній рядок -- закінчити розстановку\n''')
+                        coords = input('Ваш вибір: ')
+
+                        if coords == '':
+                            endOfArrangement = True
+                        elif coords == 'r':
+                            self.randomArrangement()
+                            return
+                        else:
+                            x = int(coords[1:])
+                            y = ord(coords[0]) - 97
+
+                            if not (0 <= x and x <= 9 and 0 <= y and y <= 9):
+                                raise WrongCoordinates
+
+                            tempField[x][y] = not tempField[x][y]
+                            if tempField[x][y]: numberOfClickedCells += 1
+                            else: numberOfClickedCells -= 1
+
+                            # рендеримо
+                            self.game.currentInterface.renderWhileArrangingShips(tempField, self.name)
+
+                        correctInput = True
+
+                    # якщо гравець ввів неадекватні дані
+                    except:
+                        print('Введіть коректні дані!')
+                        input()
+                        self.game.currentInterface.renderWhileArrangingShips(tempField, self.name)
+ ##########################################################################           
+            # 2. перевірка правильності розстановки
+
+            # TO DO: try-except
+            try:
+                # якщо обраних клітинок не 20, то розстановка вже не правильна
+                if numberOfClickedCells != 20:
+                    raise WrongNumberOfElements(numberOfClickedCells)
+                    
+
+                # проходимо по ігровому полю, шукаємо кораблі, пропускаємо порожні клітинки
+                # shipElementsList -- список оброблених клітинок корабля
+                # shipList -- список сформованих кораблів
+                # forbiddenCellList -- множина клітинок, на яких не дозволено бути кораблю
+                shipElementsList = []
+                shipList = []
+                forbiddenCellSet = set()
+                for x in range(10):
+                    for y in range(10):
+
+                        # якщо знайшли якийсь необроблений елемент корабля -- 
+                        # то це або початок корабля, або однопалубний корабель
+                        if tempField[x][y] and ((x, y) not in shipElementsList):
+                            shipElementsList.append((x, y))
+                            u, v = x, y
+                            shipLength = 1
+
+                            # починаємо формувати корабель
+                            currentShip = [(u, v)]
+
+                            # клітинки, що оточують дану клітинку знизу по діагоналі,
+                            # мають бути вільні
+                            forbiddenCellSet.add((u+1, v-1))
+                            forbiddenCellSet.add((u+1, v+1))
+
+                            if (u, v) in forbiddenCellSet: # клітинка на забороненій території
+                                raise TouchingShips((u, v))
+
+                            # далі визначаємо орієнтацію корабля (вправо чи вниз), 
+                            # оброблюємо наступні елементи корабля
+
+                            # якщо є клітинка справа -- йдемо вправо до кінця корабля
+                            if tempField[u][v+1]:
+                                endOfShip = False
+                                while not endOfShip:
+                                    v = v+1
+                                    shipLength += 1
+
+                                    if shipLength == 5: # занадто довгий корабель
+                                        raise TooLongShip((u, v))
+
+                                    if (u, v) in shipElementsList: # клітинка в двох кораблях
+                                        raise TouchingShips((u, v))
+
+                                    if (u, v) in forbiddenCellSet: # клітинка на забороненій території
+                                        raise TouchingShips((u, v))
+
+                                    shipElementsList.append((u, v))
+                                    currentShip.append((u, v))
+                                    forbiddenCellSet.add((u+1, v-1))
+                                    forbiddenCellSet.add((u+1, v+1))
+
+                                    # перевіряємо, чи наступна клітинка -- теж елемент корабля
+                                    # інакше формуємо корабель
+                                    if tempField[u][v+1]:
+                                        continue
+                                    else:
+                                        endOfShip = True
+                                        shipList.append(currentShip)
+
+
+                            # якщо є клітинка знизу -- все аналогічно
+                            elif tempField[u+1][v]:
+                                endOfShip = False
+                                while not endOfShip:
+                                    u = u + 1
+                                    shipLength += 1
+
+                                    if shipLength == 5: # занадто довгий корабель
+                                        raise TooLongShip((u, v))
+
+                                    if (u, v) in shipElementsList: # клітинка в двох кораблях
+                                        raise TouchingShips((u, v))
+
+                                    if (u, v) in forbiddenCellSet: # клітинка на забороненій території
+                                        raise TouchingShips((u, v))
+
+                                    shipElementsList.append((u, v))
+                                    currentShip.append((u, v))
+                                    forbiddenCellSet.add((u+1, v-1))
+                                    forbiddenCellSet.add((u+1, v+1))
+
+                                    # перевіряємо, чи наступна клітинка -- теж елемент корабля
+                                    # інакше формуємо корабель
+                                    if tempField[u+1][v]:
+                                        continue
+                                    else:
+                                        endOfShip = True
+                                        shipList.append(currentShip)
+
+
+                            # якщо корабель однопалубний -- просто додаємо його
+                            else:
+                                shipList.append(currentShip)
+
+
+                # ми перевірили, чи стоять кораблі так, як треба
+                # тепер перевіримо їхню кількість
+                if len(shipList) != 10:
+                    raise WrongNumberOfShips(len(shipList))
+
+                # також перевіримо, щоб були 1 чотирипалубний, 2 трипалубні кораблі...
+                shipLengthList = list(map(len, shipList))
+                if not (shipLengthList.count(1) == 4
+                    and shipLengthList.count(2) == 3
+                    and shipLengthList.count(3) == 2
+                    and shipLengthList.count(4) == 1):
+                    raise WrongSetOfShips(shipLengthList)
+
+
+########################################################################################
+                # 3. якщо помилок нема -- розстановка закінчена, зберігаємо кораблі в player.field
+                for ship in shipList:
+                    shipToSave = Ship(len(ship), ship)
+                    self.field.placeShip(shipToSave)
+                arrangementCorrect = True
+
+            # інакше -- виводимо помилку, гравець перероблює своє поле
+            except Exception as e:
+                print(e)
+                input()
 ########################################################
+
+
 
 class Player(AbsPlayer):
     def __init__(self, name, game):
@@ -348,9 +552,44 @@ class Player(AbsPlayer):
         print(self.name)
 
     def chooseCellCoord(self):
-        x = int(input("Введіть число від 0 до 9: "))
+        # """Метод обирання координат.
+        # Може видати виключення, якщо дані не коректні."""
+
+        # letter = input("Введіть букву а-j: ")
+        # x = int(input("Введіть число від 0 до 9: "))
+        # y = ord(letter)-97
+
+        # if not (0 <= x and x <= 9 and 0 <= y and y <= 9):
+        #     raise WrongCoordinates
+
+        # return (x, y)
+
+        def isOk(value, type): # допоміжна функція, яка перевіряє чи коректне значення ввів користувач
+            try:
+                if type == 0: value = int(value) # перевіряємо чи є х числом
+                else: value = ord(value) - 97  # перевіряємо чи є y літерою
+
+                if not (value >= 0 and value <= 9): # введена координата виходить за межі поля
+                    raise WrongCoordinates
+                
+            except (ValueError, TypeError):  # введено неправильний тип даних
+                raise NotCoordinates
+             
+                
+            return True
+
+          
+
         leter = input("Введіть букву а-j: ")
-        y = ord(leter)-97
+        x = input("Введіть число від 0 до 9: ")
+
+        if (isOk(x, 0) and isOk(leter, 1)): # перевіряємо чи коректні значення ввів користувач
+        
+            x = int(x)
+            y = ord(leter) - 97
+            if self.game.currentEnemy.field.cellsList[x][y].isHit == True: # перевіряємо чи не обирав користувач цю клітину раніше
+                raise CellIsAlreadyHit((x, y))
+          
         return (x, y)
 
 
@@ -360,15 +599,15 @@ class Robot(AbsPlayer):
     def __init__(self, name, game):
         super().__init__(name, game)
         self.availablePoints = [(i, j) for i in range(10) for j in range(10)]
-
-
-    def chooseCellCoord(self, step=0, coord = ()):
-        print(step)
+        self.lastCoord = ()                                          
+        
+    def chooseCellCoord(self):
+        coord = self.lastCoord
         for x in range(10):
             for y in range(10):
-                if self.field.cellsList[x][y].isHit == True:
-
-                    if (self.availablePoints.count((x, y)) != 0): self.availablePoints.remove((x, y))
+                if self.game.currentEnemy.field.cellsList[x][y].isHit == True:
+                    if (self.availablePoints.count((x, y)) != 0):
+                        self.availablePoints.remove((x, y))
         #если step = 0, то генерировать случайные точки
 
         if len(coord) != 0:
@@ -378,16 +617,14 @@ class Robot(AbsPlayer):
             Points = list(set(coordList) & set(self.availablePoints))
             # len_availablePoints = len(Points)
             if len(Points) == 0:
-                 coord = choice(self.availablePoints)
-                 print("KILL")
+                coord = choice(self.availablePoints)
+
             else:
                 coord = choice(Points)
         else:
             coord = choice(self.availablePoints)
-
-        print(coord)
-        if (self.makeMove(coord) == True):
-           self.chooseCellCoord(step=1, coord = coord)
+        if self.game.currentEnemy.field.cellsList[coord[0]][coord[1]].belongsTo != None:    self.lastCoord = coord
+        return coord
 
 
 
