@@ -87,8 +87,3 @@ class WrongSetOfShips(Exception):
 4-палубні: {self.shipLengthDict[4]}/1'''
 
 
-"""class WrongCoordinates(Exception):
-    pass
-
-class CellIsAlreadyHit(Exception):
-    pass"""
