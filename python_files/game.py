@@ -8,13 +8,12 @@ class Game(IViewable):
     """Клас, що відповідає за логіку гри."""
 
 
-    def __init__(self):
+    def __init__(self, interface):
         """Ініціалізатор класу."""
-        self.__currentInterface = Console()
+        self.__currentInterface = Graphic() if interface == '1' else Console()
         self.__currentPlayer = None
         self.__currentEnemy = None # гравець, який в даний момент не ходить
         self.__players = []
-        self.__currentInterface.clear()
 
     @property
     def currentInterface(self):
@@ -61,13 +60,12 @@ class Game(IViewable):
 
 
     def startMultiPlay(self):
-        """Проводить гру між гравцем і роботом."""
+        """Проводить гру між гравцем і гравцем."""
 
-        self.currentInterface.clear()
-        self.currentInterface.printShipsDecoration()
+        #self.currentInterface.clear()
+        #self.currentInterface.printShipsDecoration()
         # створюємо гравців
-        playerName1 = input("Введіть ім'я першого гравця: ")
-        playerName2 = input("Введіть ім'я другого гравця: ")
+        playerName1, playerName2 = self.currentInterface.renderScreenEnterName(2)
 
         player1, player2 = Player(playerName1, self), Player(playerName2, self)
         self.players = [player1, player2]
@@ -84,16 +82,18 @@ class Game(IViewable):
         while True:
 
             # просимо протилежного гравця відвернутися
-            self.currentInterface.clear()
+            """self.currentInterface.clear()
             self.currentInterface.printShipsDecoration()
             print(f"Гравець {self.currentPlayer.name}, приготуйтеся!")
-            input("Натисніть Enter, щоб продовжити: ")
+            input("Натисніть Enter, щоб продовжити: ")"""
+            self.currentInterface.renderScreenPrepareForTurn(self.currentPlayer.name)
 
             # рендеримо ігрові поля
             renderInfo = self.getRenderInfo()
             self.currentInterface.render(field=renderInfo['field'], 
-                fieldEnemy=renderInfo['fieldEnemy'],
-                message=f'Гравець {self.currentPlayer.name}, ваш хід: ')
+                fieldEnemy=renderInfo['fieldEnemy'])
+            message = f'Гравець {self.currentPlayer.name}, ваш хід! '
+            self.currentInterface.printText(message)
 
 
             # хід гравця
@@ -114,12 +114,11 @@ class Game(IViewable):
                     
                     # якщо chooseCellCoord видав помилку
                     except Exception as e:
-                        print('\n' + str(e))
-                        input()
-                        message = f'Гравець {self.currentPlayer.name}, ваш хід: '
+                        self.currentInterface.printError(e)
+                        message = f'Гравець {self.currentPlayer.name}, ваш хід! '
                         self.currentInterface.render(field=renderInfo['field'], 
-                            fieldEnemy=renderInfo['fieldEnemy'],
-                            message=message)
+                            fieldEnemy=renderInfo['fieldEnemy'])
+                        self.currentInterface.printText(message)
 
                 moveResult = self.currentPlayer.makeMove(coords) # = True, якщо гравець влучив
 
@@ -131,7 +130,7 @@ class Game(IViewable):
 
                 # на основі результату ходу формуємо повідомлення
                 if moveResult:
-                    message = 'Ви влучили! Ходіть ще раз: '
+                    message = 'Ви влучили! Ходіть ще раз! '
                 else:
                     message = 'Натисніть Enter, щоб продовжити: '
 
@@ -139,31 +138,33 @@ class Game(IViewable):
                 renderInfo = self.getRenderInfo()
                 
                 self.currentInterface.render(field=renderInfo['field'], 
-                    fieldEnemy=renderInfo['fieldEnemy'], message=message)
+                    fieldEnemy=renderInfo['fieldEnemy'])
+                self.currentInterface.printText(message)
 
 
             if winner:
                 break
 
-            input()
+            self.currentInterface.inputEnter()
             self.swapPlayer()
 
         # повідомлення про кінець гри, відображення повністю всіх ігрових полів
         renderInfo = self.getRenderInfo()
-        message = f'Гравець {winner.name} переміг!'
+        message = f'Гравець {winner.name} переміг! Натисніть Enter, щоб продовжити: '
         self.currentInterface.render(field=renderInfo['field'], 
-            fieldEnemy=renderInfo['fieldEnemy'], message=message)
-        input()
-
+            fieldEnemy=renderInfo['fieldEnemy'])
+        self.currentInterface.printText(message)
+        self.currentInterface.inputEnter()
+        
 
     def startSinglePlay(self):
         """Проводить гру з роботом."""
         
-        self.currentInterface.clear()
-        self.currentInterface.printShipsDecoration()
+        #self.currentInterface.clear()
+        #self.currentInterface.printShipsDecoration()
 
         # створюємо гравця
-        playerName = input("Введіть ваше ім'я: ")
+        playerName = self.currentInterface.renderScreenEnterName(1)
         self.players = [Player(playerName, self), Robot("Robot", self)]
         self.currentPlayer = self.players[0]
         self.currentEnemy = self.players[1]
@@ -185,13 +186,13 @@ class Game(IViewable):
             if isinstance(self.currentPlayer, Robot):
                 message = "Гравець "+ self.currentPlayer.name + " ходить... "
                 self.currentInterface.render(fieldEnemy=renderInfo['field'], 
-                    field=renderInfo['fieldEnemy'],
-                    message=message)
+                    field=renderInfo['fieldEnemy'])
+                self.currentInterface.printText(message)
             else:
-                message = "Гравець "+ self.currentPlayer.name + ", ваш хід: "
+                message = "Гравець "+ self.currentPlayer.name + ", ваш хід! "
                 self.currentInterface.render(field=renderInfo['field'], 
-                    fieldEnemy=renderInfo['fieldEnemy'],
-                    message=message)
+                    fieldEnemy=renderInfo['fieldEnemy'])
+                self.currentInterface.printText(message)
 
             moveResult = True
             while moveResult != False: # поки гравець не промахнеться
@@ -207,19 +208,18 @@ class Game(IViewable):
                     
                     # якщо chooseCellCoord видав помилку
                     except Exception as e:
-                        print('\n' + str(e))
-                        input()
-                        message = f'Гравець {self.currentPlayer.name}, ваш хід: '
+                        self.currentInterface.printError(e)
+                        message = f'Гравець {self.currentPlayer.name}, ваш хід! '
                         self.currentInterface.render(field=renderInfo['field'], 
-                            fieldEnemy=renderInfo['fieldEnemy'],
-                            message=message)
+                            fieldEnemy=renderInfo['fieldEnemy'])
+                        self.currentInterface.printText(message)
 
                 moveResult = self.currentPlayer.makeMove(coords)
 
                 # у випадку з роботом -- чекаємо 3 секунди, щоб він не походив 
                 # миттєво після ходу людини
                 if isinstance(self.currentPlayer, Robot):
-                    sleep(3)
+                    sleep(2)
 
                 winner = self.checkForGameOver()
                 if winner: # якщо кінець гри
@@ -230,7 +230,7 @@ class Game(IViewable):
     
                     # для робота й людини -- різні повідомлення
                     if isinstance(self.currentPlayer, Player):
-                        message = "Гравець "+ self.currentPlayer.name + " влучив! Ходіть ще раз: "
+                        message = "Гравець "+ self.currentPlayer.name + " влучив! Ходіть ще раз! "
                     else:
                         message = "Гравець "+ self.currentPlayer.name + " влучив! Він ходить... "
 
@@ -238,10 +238,12 @@ class Game(IViewable):
                     renderInfo = self.getRenderInfo()
                     if isinstance(self.currentPlayer, Player):
                         self.currentInterface.render(field=renderInfo['field'],
-                            fieldEnemy=renderInfo['fieldEnemy'], message=message)
+                            fieldEnemy=renderInfo['fieldEnemy'])
+                        self.currentInterface.printText(message)
                     else:
                         self.currentInterface.render(fieldEnemy=renderInfo['field'],
-                            field=renderInfo['fieldEnemy'], message=message)
+                            field=renderInfo['fieldEnemy'])
+                        self.currentInterface.printText(message)
 
 
             if winner:
@@ -251,9 +253,15 @@ class Game(IViewable):
 
         # повідомлення про кінець гри, відображення повністю всіх ігрових полів
         renderInfo = self.getRenderInfo()
-        message = f'Гравець {winner.name} переміг!'
-        self.currentInterface.render(field=renderInfo['field'],
-            fieldEnemy=renderInfo['fieldEnemy'], message=message)
+        message = f'Гравець {winner.name} переміг! Натисніть Enter, щоб продовжити: '
+        if isinstance(winner, Robot):
+            self.currentInterface.render(field=renderInfo['fieldEnemy'],
+                fieldEnemy=renderInfo['field'], showall=True)
+        else:
+            self.currentInterface.render(field=renderInfo['field'],
+                fieldEnemy=renderInfo['fieldEnemy'])
+        self.currentInterface.printText(message)
+        self.currentInterface.inputEnter()
 
 
     def checkForGameOver(self):
@@ -301,12 +309,18 @@ class Game(IViewable):
 
 
     
-        
+system('cls')      
+interface = input("Введіть 1 для графічного інтерфейсу чи будь-яку іншу клавішу для консольного: ")
+
+game = Game(interface)
+quitChoosed = False
+while not quitChoosed:
+    option = game.currentInterface.mainMenu()
+    if option == '1':
+        game.startSinglePlay()
+    elif option == '2':
+        game.startMultiPlay()
+    elif option == '0':
+        quitChoosed = True
 
 
-game = Game()
-option = game.currentInterface.mainMenu()
-if option == 1:
-    game.startSinglePlay()
-elif option == 2:
-    game.startMultiPlay()

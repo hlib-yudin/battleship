@@ -377,11 +377,8 @@ class AbsPlayer(ABC):
                     try:
                         # користувач вводить координати клітинки; щоб завершити, він
                         # вводить порожнй рядок; для випадкової розстановки він вводить 'r'
-                        print('''
-a3 -- обрати клітинку а3
-r -- випадкова розстановка
-Порожній рядок -- закінчити розстановку\n''')
-                        coords = input('Ваш вибір: ')
+                        
+                        coords = self.game.currentInterface.inputCoords()
 
                         if coords == '':
                             endOfArrangement = True
@@ -405,9 +402,11 @@ r -- випадкова розстановка
                         correctInput = True
 
                     # якщо гравець ввів неадекватні дані
-                    except:
-                        print('Введіть коректні дані!')
-                        input()
+                    except (ValueError, TypeError) as e:
+                        self.game.currentInterface.printError(NotCoordinates())
+                        self.game.currentInterface.renderWhileArrangingShips(tempField, self.name)
+                    except Exception as e:
+                        self.game.currentInterface.printError(e)
                         self.game.currentInterface.renderWhileArrangingShips(tempField, self.name)
  ##########################################################################           
             # 2. перевірка правильності розстановки
@@ -538,8 +537,7 @@ r -- випадкова розстановка
 
             # інакше -- виводимо помилку, гравець перероблює своє поле
             except Exception as e:
-                print(e)
-                input()
+                self.game.currentInterface.printError(e)
 ########################################################
 
 
@@ -572,16 +570,18 @@ class Player(AbsPlayer):
                 if not (value >= 0 and value <= 9): # введена координата виходить за межі поля
                     raise WrongCoordinates
                 
-            except (ValueError, TypeError):  # введено неправильний тип даних
+            except Exception:  # введено неправильний тип даних
                 raise NotCoordinates
              
                 
             return True
 
-          
+        coords = self.game.currentInterface.inputCoords()
+        leter = coords[0] if len(coords) > 0 else None
+        x = coords[1:] if len(coords) > 1 else None
 
-        leter = input("Введіть букву а-j: ")
-        x = input("Введіть число від 0 до 9: ")
+        """leter = input("Введіть букву а-j: ")
+        x = input("Введіть число від 0 до 9: ")"""
 
         if (isOk(x, 0) and isOk(leter, 1)): # перевіряємо чи коректні значення ввів користувач
         
