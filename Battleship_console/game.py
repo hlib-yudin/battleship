@@ -348,19 +348,15 @@ class Game(IViewable):
 ########################################################
 
 class AbsPlayer(ABC):
-    def __init__(self, name, game):
+    def __init__(self, name):
         self.__name = name
         self.__score = 0
         self.__field = Field()
-        self.__game = game
 
     @property
     def name(self):
         return self.__name
 
-    @property
-    def game(self):
-        return self.__game
 
     @property
     def field(self):
@@ -501,8 +497,8 @@ class AbsPlayer(ABC):
 
 
 class Player(AbsPlayer):
-    def __init__(self, name, game):
-        super().__init__(name, game)
+    def __init__(self, name):
+        super().__init__(name)
 
     def print_name(self):
         print(self.name)
@@ -742,8 +738,8 @@ class Player(AbsPlayer):
 
 class Robot(AbsPlayer):
 
-    def __init__(self, name, game):
-        super().__init__(name, game)
+    def __init__(self, name):
+        super().__init__(name)
         self.availablePoints = [(i, j) for i in range(10) for j in range(10)]
         self.lastCoord = ()
 
