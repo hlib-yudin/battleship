@@ -80,7 +80,7 @@ class Game(IViewable):
         playerName1 = input("Введіть ім'я першого гравця: ")
         playerName2 = input("Введіть ім'я другого гравця: ")
 
-        player1, player2 = Player(playerName1, self), Player(playerName2, self)
+        player1, player2 = Player(playerName1), Player(playerName2)
         self.players = [player1, player2]
         self.currentPlayer = self.players[0]
         self.currentEnemy = self.players[1]
@@ -175,7 +175,7 @@ class Game(IViewable):
 
         # створюємо гравця
         playerName = input("Введіть ваше ім'я: ")
-        self.players = [Player(playerName, self), Robot("Robot", self)]
+        self.players = [Player(playerName, self), Robot("Robot")]
         self.currentPlayer = self.players[0]
         self.currentEnemy = self.players[1]
 
