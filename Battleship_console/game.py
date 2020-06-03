@@ -175,7 +175,7 @@ class Game(IViewable):
 
         # створюємо гравця
         playerName = input("Введіть ваше ім'я: ")
-        self.players = [Player(playerName, self), Robot("Robot")]
+        self.players = [Player(playerName), Robot("Robot")]
         self.currentPlayer = self.players[0]
         self.currentEnemy = self.players[1]
 
